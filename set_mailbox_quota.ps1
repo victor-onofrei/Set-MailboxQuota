@@ -1,4 +1,3 @@
-$migration_list = @()
 $input_path = "$env:homeshare\VDI-UserData\Download\generic\inputs\"
 $file_name = "mailbox_list.csv"
 $all_mailboxes = Get-Content $input_path\$file_name
