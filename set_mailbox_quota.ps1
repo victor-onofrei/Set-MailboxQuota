@@ -19,7 +19,7 @@ foreach ($mailbox in $allMailboxes) {
     }
     $movingProhibitSendQuota = $desiredQuota
     $movingIssueWarningQuota = [int64]($desiredQuota*0.9)
-    Set-mailbox $mailbox -UseDatabaseQuotaDefaults $false -ProhibitSendQuota $movingProhibitSendQuota `
+    Set-Mailbox $mailbox -UseDatabaseQuotaDefaults $false -ProhibitSendQuota $movingProhibitSendQuota `
         -ProhibitSendReceiveQuota $defaultProhibitSendReceiveQuota -RecoverableItemsQuota `
         $defaultRecoverableItemsQuota -RecoverableItemsWarningQuota $defaultRecoverableItemsWarningQuota `
         -IssueWarningQuota $movingIssueWarningQuota
@@ -35,7 +35,7 @@ foreach ($mailbox in $allMailboxes) {
         }
         $movingArchiveQuota = $desiredQuota
         $movingArchiveWarningQuota = $desiredQuota*0.9
-        Set-mailbox $mailbox -UseDatabaseQuotaDefaults $false -ArchiveQuota $movingArchiveQuota -ArchiveWarningQuota `
+        Set-Mailbox $mailbox -UseDatabaseQuotaDefaults $false -ArchiveQuota $movingArchiveQuota -ArchiveWarningQuota `
                                                                                         $movingArchiveWarningQuota
     }
 }
