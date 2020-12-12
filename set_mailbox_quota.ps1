@@ -1,6 +1,6 @@
 $inputPath = "$env:homeshare\VDI-UserData\Download\generic\inputs\"
 $fileName = "mailbox_list.csv"
-$allMailboxes = Get-Content $inputPath\$fileName
+$allMailboxes = Get-Content "$inputPath\$fileName"
 
 $defaultProhibitSendReceiveQuota = "100GB"
 $defaultRecoverableItemsQuota = "30GB"
