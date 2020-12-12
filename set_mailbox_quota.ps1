@@ -9,7 +9,7 @@ $defaultRecoverableItemsWarningQuota = "20GB"
 foreach ($mailbox in $allMailboxes) {
     $mailboxSize = Get-MailboxStatistics -Identity $mailbox | select @{Name="TotalItemSizeInGB"; `
     Expression={[math]::Round(($_.TotalItemSize.ToString().Split("(")[1].Split(" ")[0].Replace(",","")/1GB),2)}} | `
-     Select TotalItemSizeInGB -ExpandProperty TotalItemSizeInGB
+     Select "TotalItemSizeInGB" -ExpandProperty "TotalItemSizeInGB"
     if ($mailboxSize -eq 0) {
         $desiredQuota = 2GB
     } elseif ($mailboxSize%1 -lt 0.5 -and $mailboxSize%1 -gt 0) {
@@ -27,7 +27,7 @@ foreach ($mailbox in $allMailboxes) {
     if ((Get-Mailbox -Identity $mailbox).ArchiveStatus -ne "None") {
         $archiveSize = Get-MailboxStatistics -Identity $mailbox -Archive | select @{Name="TotalItemSizeInGB"; `
         Expression={[math]::Round(($_.TotalItemSize.ToString().Split("(")[1].Split(" ")[0].Replace(",","")/1GB),2)}} | `
-         Select TotalItemSizeInGB -ExpandProperty TotalItemSizeInGB
+         Select "TotalItemSizeInGB" -ExpandProperty "TotalItemSizeInGB"
         if ($archiveSize%1 -lt 0.5 -and $archiveSize%1 -gt 0) {
             $desiredQuota = ([math]::Round($archiveSize)+5.5)*([math]::pow(2,30))
         } else {
