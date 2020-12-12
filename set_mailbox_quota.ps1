@@ -2,6 +2,8 @@ $inputPath = "$env:homeshare\VDI-UserData\Download\generic\inputs\"
 $fileName = "mailbox_list.csv"
 $allMailboxes = Get-Content "$inputPath\$fileName"
 
+$sizeFieldName = "TotalItemSizeInGB"
+
 $defaultProhibitSendReceiveQuota = "100GB"
 $defaultRecoverableItemsQuota = "30GB"
 $defaultRecoverableItemsWarningQuota = "20GB"
@@ -10,12 +12,12 @@ foreach ($mailbox in $allMailboxes) {
     $mailboxSize =
         Get-MailboxStatistics -Identity $mailbox | `
         select @{
-            Name = "TotalItemSizeInGB"; `
+            Name = $sizeFieldName; `
             Expression = {
                 [math]::Round(($_.TotalItemSize.ToString().Split("(")[1].Split(" ")[0].Replace(",", "") / 1GB), 2)
             }
         } | `
-        Select "TotalItemSizeInGB" -ExpandProperty "TotalItemSizeInGB"
+        Select $sizeFieldName -ExpandProperty $sizeFieldName
 
     if ($mailboxSize -eq 0) {
         $desiredQuota = 2GB
@@ -40,12 +42,12 @@ foreach ($mailbox in $allMailboxes) {
         $archiveSize =
             Get-MailboxStatistics -Identity $mailbox -Archive | `
             select @{
-                Name = "TotalItemSizeInGB"; `
+                Name = $sizeFieldName; `
                 Expression = {
                     [math]::Round(($_.TotalItemSize.ToString().Split("(")[1].Split(" ")[0].Replace(",", "") / 1GB), 2)
                 }
             } | `
-            Select "TotalItemSizeInGB" -ExpandProperty "TotalItemSizeInGB"
+            Select $sizeFieldName -ExpandProperty $sizeFieldName
 
         if ($archiveSize % 1 -lt 0.5 -and $archiveSize % 1 -gt 0) {
             $desiredQuota = ([math]::Round($archiveSize) + 5.5) * [math]::pow(2, 30)
