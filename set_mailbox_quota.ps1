@@ -41,7 +41,9 @@ foreach ($mailbox in $allMailboxes) {
     $archiveDatabase = (Get-Mailbox -Identity $mailbox).ArchiveDatabase
     $archiveGuid = (Get-Mailbox -Identity $mailbox).ArchiveGuid
 
-    if (($archiveGuid -ne "00000000-0000-0000-0000-000000000000") -and $archiveDatabase) {
+    $hasArchive = ($archiveGuid -ne "00000000-0000-0000-0000-000000000000") -and $archiveDatabase
+
+    if ($hasArchive) {
         $archiveSize =
             Get-MailboxStatistics -Identity $mailbox -Archive | `
             select @{
@@ -57,13 +59,16 @@ foreach ($mailbox in $allMailboxes) {
         } else {
             $archiveDesiredQuota = ([math]::Round($archiveSize) + 5) * [math]::pow(2, 30)
         }
-
-        $movingArchiveQuota = $archiveDesiredQuota
-        $movingArchiveWarningQuota = $archiveDesiredQuota * 0.9
-
-        Set-Mailbox $mailbox `
-            -UseDatabaseQuotaDefaults $false `
-            -ArchiveQuota $movingArchiveQuota `
-            -ArchiveWarningQuota $movingArchiveWarningQuota
+    } else {
+        # If the user doesn't have an archive yet, we're setting a quota of 5GB.
+        $archiveDesiredQuota = 5GB
     }
+
+    $movingArchiveQuota = $archiveDesiredQuota
+    $movingArchiveWarningQuota = $archiveDesiredQuota * 0.9
+
+    Set-Mailbox $mailbox `
+        -UseDatabaseQuotaDefaults $false `
+        -ArchiveQuota $movingArchiveQuota `
+        -ArchiveWarningQuota $movingArchiveWarningQuota
 }
