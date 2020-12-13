@@ -41,7 +41,7 @@ foreach ($mailbox in $allMailboxes) {
     $archiveDatabase = (Get-Mailbox -Identity $mailbox).ArchiveDatabase
     $archiveGuid = (Get-Mailbox -Identity $mailbox).ArchiveGuid
 
-    if (($archiveGuid -ne "00000000-0000-0000-0000-000000000000") -and ($archiveDatabase)) {
+    if (($archiveGuid -ne "00000000-0000-0000-0000-000000000000") -and $archiveDatabase) {
         $archiveSize =
             Get-MailboxStatistics -Identity $mailbox -Archive | `
             select @{
