@@ -1,6 +1,14 @@
-$inputPath = "$env:homeshare\VDI-UserData\Download\generic\inputs\"
-$fileName = "mailbox_list.csv"
-$allMailboxes = Get-Content "$inputPath\$fileName"
+param (
+    [String]$inputPath = "$env:homeshare\VDI-UserData\Download\generic\inputs\",
+    [String]$fileName = "mailbox_list.csv",
+    [String]$user = $null
+)
+
+if ($user) {
+    $allMailboxes = @($user)
+} else {
+    $allMailboxes = Get-Content "$inputPath\$fileName"
+}
 
 $sizeFieldName = "TotalItemSizeInGB"
 
@@ -8,8 +16,64 @@ $defaultProhibitSendReceiveQuota = "100GB"
 $defaultRecoverableItemsQuota = "30GB"
 $defaultRecoverableItemsWarningQuota = "20GB"
 
+$mailboxMinimumQuotaDifference = 1
+$mailboxMinimumQuota = 2
+$mailboxQuotaStep = 0.5
+
+$archiveMinimumQuotaDifference = 1
+$archiveMinimumQuota = 5
+$archiveQuotaStep = 5.0
+
+function Get-QuotaForSize {
+    <#
+        .SYNOPSIS
+            Compute and return a quota based on the input size based on specific
+            step, minimum quota and minimum difference between size and quota.
+
+        .EXAMPLE
+            Get-QuotaForSize
+                -size 1.2
+                -minimumDifference 1
+                -minimumQuota 2
+                -step 0.5
+
+            This returns 2.5.
+    #>
+    param(
+        [Double]$size,
+        [Double]$minimumDifference,
+        [Double]$minimumQuota,
+        [Double]$step
+    )
+
+    $upscaledQuotaStep = [math]::Ceiling($step) / $step
+
+    $upscaledSize = ($size + $minimumDifference) * $upscaledQuotaStep
+    $downscaledQuota = [math]::Ceiling($upscaledSize) / $upscaledQuotaStep
+
+    [math]::Max($downscaledQuota, $minimumQuota)
+}
+
+function Get-BytesFromGigaBytes {
+    <#
+        .SYNOPSIS
+            Compute and return a quota based on the input size based on specific
+            step, minimum quota and minimum difference between size and quota.
+
+        .EXAMPLE
+            Get-QuotaFromSize -gigaBytes 1.2
+
+            This returns 2.5.
+    #>
+    param(
+        [Double]$gigaBytes
+    )
+
+    [math]::Round($gigaBytes * [math]::Pow(2, 30))
+}
+
 foreach ($mailbox in $allMailboxes) {
-    $mailboxSize =
+    $mailboxSizeGigaBytes =
         Get-MailboxStatistics -Identity $mailbox | `
         select @{
             Name = $sizeFieldName;
@@ -19,16 +83,15 @@ foreach ($mailbox in $allMailboxes) {
         } | `
         Select $sizeFieldName -ExpandProperty $sizeFieldName
 
-    if ($mailboxSize -eq 0) {
-        $desiredQuota = 2GB
-    } elseif ($mailboxSize % 1 -lt 0.5 -and $mailboxSize % 1 -gt 0) {
-        $desiredQuota = ([math]::Round($mailboxSize) + 1.5) * [math]::pow(2, 30)
-    } else {
-        $desiredQuota = ([math]::Round($mailboxSize) + 1) * [math]::pow(2, 30)
-    }
+    $mailboxDesiredQuotaGigaBytes = Get-QuotaForSize `
+        -size $mailboxSizeGigaBytes `
+        -minimumDifference $mailboxMinimumQuotaDifference `
+        -minimumQuota $mailboxMinimumQuota `
+        -step $mailboxQuotaStep
+    $mailboxDesiredQuotaBytes = Get-BytesFromGigaBytes -gigaBytes $mailboxDesiredQuotaGigaBytes
 
-    $movingProhibitSendQuota = $desiredQuota
-    $movingIssueWarningQuota = [int64]($desiredQuota * 0.9)
+    $movingProhibitSendQuota = $mailboxDesiredQuotaBytes
+    $movingIssueWarningQuota = [math]::Round($mailboxDesiredQuotaBytes * 0.9)
 
     Set-Mailbox $mailbox `
         -UseDatabaseQuotaDefaults $false `
@@ -44,7 +107,7 @@ foreach ($mailbox in $allMailboxes) {
     $hasArchive = ($archiveGuid -ne "00000000-0000-0000-0000-000000000000") -and $archiveDatabase
 
     if ($hasArchive) {
-        $archiveSize =
+        $archiveSizeGigaBytes =
             Get-MailboxStatistics -Identity $mailbox -Archive | `
             select @{
                 Name = $sizeFieldName;
@@ -53,19 +116,19 @@ foreach ($mailbox in $allMailboxes) {
                 }
             } | `
             Select $sizeFieldName -ExpandProperty $sizeFieldName
-
-        if ($archiveSize % 1 -lt 0.5 -and $archiveSize % 1 -gt 0) {
-            $archiveDesiredQuota = ([math]::Round($archiveSize) + 5.5) * [math]::pow(2, 30)
-        } else {
-            $archiveDesiredQuota = ([math]::Round($archiveSize) + 5) * [math]::pow(2, 30)
-        }
     } else {
-        # If the user doesn't have an archive yet, we're setting a quota of 5GB.
-        $archiveDesiredQuota = 5GB
+        $archiveSizeGigaBytes = 0
     }
 
-    $movingArchiveQuota = $archiveDesiredQuota
-    $movingArchiveWarningQuota = $archiveDesiredQuota * 0.9
+    $archiveDesiredQuotaGigaBytes = Get-QuotaForSize `
+        -size $archiveSizeGigaBytes `
+        -minimumDifference $archiveMinimumQuotaDifference `
+        -minimumQuota $archiveMinimumQuota `
+        -step $archiveQuotaStep
+    $archiveDesiredQuotaBytes = Get-BytesFromGigaBytes -gigaBytes $archiveDesiredQuotaGigaBytes
+
+    $movingArchiveQuota = $archiveDesiredQuotaBytes
+    $movingArchiveWarningQuota = [math]::Round($archiveDesiredQuotaBytes * 0.9)
 
     Set-Mailbox $mailbox `
         -UseDatabaseQuotaDefaults $false `
