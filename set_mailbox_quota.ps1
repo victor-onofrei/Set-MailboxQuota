@@ -9,7 +9,7 @@ $defaultRecoverableItemsQuota = "30GB"
 $defaultRecoverableItemsWarningQuota = "20GB"
 
 foreach ($mailbox in $allMailboxes) {
-    $mailboxSize =
+    $mailboxSizeGigaBytes =
         Get-MailboxStatistics -Identity $mailbox | `
         select @{
             Name = $sizeFieldName;
@@ -19,16 +19,16 @@ foreach ($mailbox in $allMailboxes) {
         } | `
         Select $sizeFieldName -ExpandProperty $sizeFieldName
 
-    if ($mailboxSize -eq 0) {
-        $desiredQuota = 2GB
-    } elseif ($mailboxSize % 1 -lt 0.5 -and $mailboxSize % 1 -gt 0) {
-        $desiredQuota = ([math]::Round($mailboxSize) + 1.5) * [math]::pow(2, 30)
+    if ($mailboxSizeGigaBytes -eq 0) {
+        $mailboxDesiredQuotaBytes = 2GB
+    } elseif ($mailboxSizeGigaBytes % 1 -lt 0.5 -and $mailboxSizeGigaBytes % 1 -gt 0) {
+        $mailboxDesiredQuotaBytes = ([math]::Round($mailboxSizeGigaBytes) + 1.5) * [math]::pow(2, 30)
     } else {
-        $desiredQuota = ([math]::Round($mailboxSize) + 1) * [math]::pow(2, 30)
+        $mailboxDesiredQuotaBytes = ([math]::Round($mailboxSizeGigaBytes) + 1) * [math]::pow(2, 30)
     }
 
-    $movingProhibitSendQuota = $desiredQuota
-    $movingIssueWarningQuota = [math]::Round($desiredQuota * 0.9)
+    $movingProhibitSendQuota = $mailboxDesiredQuotaBytes
+    $movingIssueWarningQuota = [math]::Round($mailboxDesiredQuotaBytes * 0.9)
 
     Set-Mailbox $mailbox `
         -UseDatabaseQuotaDefaults $false `
@@ -44,7 +44,7 @@ foreach ($mailbox in $allMailboxes) {
     $hasArchive = ($archiveGuid -ne "00000000-0000-0000-0000-000000000000") -and $archiveDatabase
 
     if ($hasArchive) {
-        $archiveSize =
+        $archiveSizeGigaBytes =
             Get-MailboxStatistics -Identity $mailbox -Archive | `
             select @{
                 Name = $sizeFieldName;
@@ -54,18 +54,18 @@ foreach ($mailbox in $allMailboxes) {
             } | `
             Select $sizeFieldName -ExpandProperty $sizeFieldName
 
-        if ($archiveSize % 1 -lt 0.5 -and $archiveSize % 1 -gt 0) {
-            $archiveDesiredQuota = ([math]::Round($archiveSize) + 5.5) * [math]::pow(2, 30)
+        if ($archiveSizeGigaBytes % 1 -lt 0.5 -and $archiveSizeGigaBytes % 1 -gt 0) {
+            $archiveDesiredQuotaBytes = ([math]::Round($archiveSizeGigaBytes) + 5.5) * [math]::pow(2, 30)
         } else {
-            $archiveDesiredQuota = ([math]::Round($archiveSize) + 5) * [math]::pow(2, 30)
+            $archiveDesiredQuotaBytes = ([math]::Round($archiveSizeGigaBytes) + 5) * [math]::pow(2, 30)
         }
     } else {
         # If the user doesn't have an archive yet, we're setting a quota of 5GB.
-        $archiveDesiredQuota = 5GB
+        $archiveDesiredQuotaBytes = 5GB
     }
 
-    $movingArchiveQuota = $archiveDesiredQuota
-    $movingArchiveWarningQuota = [math]::Round($archiveDesiredQuota * 0.9)
+    $movingArchiveQuota = $archiveDesiredQuotaBytes
+    $movingArchiveWarningQuota = [math]::Round($archiveDesiredQuotaBytes * 0.9)
 
     Set-Mailbox $mailbox `
         -UseDatabaseQuotaDefaults $false `
