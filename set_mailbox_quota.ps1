@@ -28,7 +28,7 @@ foreach ($mailbox in $allMailboxes) {
     }
 
     $movingProhibitSendQuota = $desiredQuota
-    $movingIssueWarningQuota = [int64]($desiredQuota * 0.9)
+    $movingIssueWarningQuota = [math]::Round($desiredQuota * 0.9)
 
     Set-Mailbox $mailbox `
         -UseDatabaseQuotaDefaults $false `
