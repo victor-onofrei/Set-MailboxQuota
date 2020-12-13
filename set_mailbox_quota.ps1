@@ -53,13 +53,13 @@ foreach ($mailbox in $allMailboxes) {
             Select $sizeFieldName -ExpandProperty $sizeFieldName
 
         if ($archiveSize % 1 -lt 0.5 -and $archiveSize % 1 -gt 0) {
-            $desiredQuota = ([math]::Round($archiveSize) + 5.5) * [math]::pow(2, 30)
+            $archiveDesiredQuota = ([math]::Round($archiveSize) + 5.5) * [math]::pow(2, 30)
         } else {
-            $desiredQuota = ([math]::Round($archiveSize) + 5) * [math]::pow(2, 30)
+            $archiveDesiredQuota = ([math]::Round($archiveSize) + 5) * [math]::pow(2, 30)
         }
 
-        $movingArchiveQuota = $desiredQuota
-        $movingArchiveWarningQuota = $desiredQuota * 0.9
+        $movingArchiveQuota = $archiveDesiredQuota
+        $movingArchiveWarningQuota = $archiveDesiredQuota * 0.9
 
         Set-Mailbox $mailbox `
             -UseDatabaseQuotaDefaults $false `
