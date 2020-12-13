@@ -65,7 +65,7 @@ foreach ($mailbox in $allMailboxes) {
     }
 
     $movingArchiveQuota = $archiveDesiredQuota
-    $movingArchiveWarningQuota = $archiveDesiredQuota * 0.9
+    $movingArchiveWarningQuota = [math]::Round($archiveDesiredQuota * 0.9)
 
     Set-Mailbox $mailbox `
         -UseDatabaseQuotaDefaults $false `
