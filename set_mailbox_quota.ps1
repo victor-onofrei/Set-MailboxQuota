@@ -53,15 +53,16 @@ foreach ($mailbox in $allMailboxes) {
                 }
             } | `
             Select $sizeFieldName -ExpandProperty $sizeFieldName
-
-        if ($archiveSizeGigaBytes % 1 -lt 0.5 -and $archiveSizeGigaBytes % 1 -gt 0) {
-            $archiveDesiredQuotaBytes = ([math]::Round($archiveSizeGigaBytes) + 5.5) * [math]::pow(2, 30)
-        } else {
-            $archiveDesiredQuotaBytes = ([math]::Round($archiveSizeGigaBytes) + 5) * [math]::pow(2, 30)
-        }
     } else {
-        # If the user doesn't have an archive yet, we're setting a quota of 5GB.
+        $archiveSizeGigaBytes = 0
+    }
+
+    if ($archiveSizeGigaBytes -eq 0) {
         $archiveDesiredQuotaBytes = 5GB
+    } elseif ($archiveSizeGigaBytes % 1 -lt 0.5 -and $archiveSizeGigaBytes % 1 -gt 0) {
+        $archiveDesiredQuotaBytes = ([math]::Round($archiveSizeGigaBytes) + 5.5) * [math]::pow(2, 30)
+    } else {
+        $archiveDesiredQuotaBytes = ([math]::Round($archiveSizeGigaBytes) + 5) * [math]::pow(2, 30)
     }
 
     $movingArchiveQuota = $archiveDesiredQuotaBytes
