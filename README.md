@@ -4,5 +4,4 @@ Set mailbox quota for _Exchange On Premises_ mailboxes (+ archives) with default
 
 ## Usage
 
-Populate .csv file with list of mailboxes or pass switch `-user` and the identifier of the mailbox for an ad-hoc run on a single user.
-
+Populate a `.csv` file with a list of mailboxes or pass the argument `-user` followed by the identifier of the mailbox for an ad-hoc run on a single user.
