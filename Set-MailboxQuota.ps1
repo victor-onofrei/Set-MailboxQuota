@@ -101,10 +101,8 @@ foreach ($mailbox in $allMailboxes) {
         -RecoverableItemsWarningQuota $defaultRecoverableItemsWarningQuota `
         -IssueWarningQuota $movingIssueWarningQuota
 
-    $archiveDatabase = (Get-Mailbox -Identity $mailbox).ArchiveDatabase
-    $archiveGuid = (Get-Mailbox -Identity $mailbox).ArchiveGuid
-
-    $hasArchive = ($archiveGuid -ne "00000000-0000-0000-0000-000000000000") -and $archiveDatabase
+    $mailboxOutput = Get-Mailbox -Identity $mailbox
+    $hasArchive = ($mailboxOutput.archiveGuid -ne "00000000-0000-0000-0000-000000000000") -and $mailboxOutput.archiveDatabase
 
     if ($hasArchive) {
         $archiveSizeGigaBytes =
