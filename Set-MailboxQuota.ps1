@@ -75,13 +75,13 @@ function Get-BytesFromGigaBytes {
 foreach ($mailbox in $allMailboxes) {
     $mailboxSizeGigaBytes =
         Get-MailboxStatistics -Identity $mailbox | `
-        select @{
+        Select-Object @{
             Name = $sizeFieldName;
             Expression = {
                 [math]::Round(($_.TotalItemSize.ToString().Split("(")[1].Split(" ")[0].Replace(",", "") / 1GB), 2)
             }
         } | `
-        Select $sizeFieldName -ExpandProperty $sizeFieldName
+        Select-Object $sizeFieldName -ExpandProperty $sizeFieldName
 
     $mailboxDesiredQuotaGigaBytes = Get-QuotaForSize `
         -size $mailboxSizeGigaBytes `
@@ -107,13 +107,13 @@ foreach ($mailbox in $allMailboxes) {
     if ($hasArchive) {
         $archiveSizeGigaBytes =
             Get-MailboxStatistics -Identity $mailbox -Archive | `
-            select @{
+            Select-Object @{
                 Name = $sizeFieldName;
                 Expression = {
                     [math]::Round(($_.TotalItemSize.ToString().Split("(")[1].Split(" ")[0].Replace(",", "") / 1GB), 2)
                 }
             } | `
-            Select $sizeFieldName -ExpandProperty $sizeFieldName
+            Select-Object $sizeFieldName -ExpandProperty $sizeFieldName
     } else {
         $archiveSizeGigaBytes = 0
     }
